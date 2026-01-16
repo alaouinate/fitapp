@@ -1,0 +1,77 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitVision Pro</title>
+    <!-- Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <!-- Icons -->
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <!-- Chart.js for Weight Tracker -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="style.css">
+</head>
+
+<body>
+    <div id="app">
+        <!-- Sidebar (Desktop) / Bottom Nav (Mobile) -->
+        <nav class="sidebar">
+            <div class="logo">
+                <i class="ph-fill ph-aperture"></i>
+                <span>FitVision</span>
+            </div>
+
+            <div class="nav-items">
+                <button class="nav-item active" data-view="dashboard">
+                    <i class="ph ph-house"></i>
+                    <span>Home</span>
+                </button>
+                <button class="nav-item" data-view="workout">
+                    <i class="ph ph-barbell"></i>
+                    <span>Workout</span>
+                </button>
+                <button class="nav-item scan-btn" data-view="scan">
+                    <div class="scan-circle">
+                        <i class="ph-fill ph-camera"></i>
+                    </div>
+                    <span>Scan</span>
+                </button>
+                <button class="nav-item" data-view="nutrition">
+                    <i class="ph ph-bowl-food"></i>
+                    <span>Nutrition</span>
+                </button>
+                <button class="nav-item" data-view="profile">
+                    <i class="ph ph-user"></i>
+                    <span>Profile</span>
+                </button>
+            </div>
+        </nav>
+
+        <!-- Main Content -->
+        <main class="main-content">
+            <header class="top-bar">
+                <h1 id="page-title">Dashboard</h1>
+                <div class="user-profile">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="User">
+                </div>
+            </header>
+
+            <div id="content-area" class="content-area">
+                <!-- Views injected via JS -->
+            </div>
+        </main>
+
+        <!-- Global Components like Modals -->
+        <div id="modal-overlay" class="modal-overlay">
+            <div id="modal-container" class="modal-container"></div>
+        </div>
+    </div>
+
+    <script src="app.js"></script>
+</body>
+
+</html>

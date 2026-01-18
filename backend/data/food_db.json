@@ -1,0 +1,82 @@
+[
+    {
+        "id": "salmon_meal",
+        "keywords": [
+            "salmon",
+            "fish",
+            "seafood"
+        ],
+        "name": "Grilled Salmon & Quinoa",
+        "calories": 450,
+        "protein": 35,
+        "carbs": 40,
+        "fat": 15
+    },
+    {
+        "id": "chicken_meal",
+        "keywords": [
+            "chicken",
+            "poultry",
+            "breast"
+        ],
+        "name": "Chicken Breast & Rice",
+        "calories": 400,
+        "protein": 40,
+        "carbs": 35,
+        "fat": 8
+    },
+    {
+        "id": "steak_meal",
+        "keywords": [
+            "steak",
+            "beef",
+            "meat",
+            "pot roast"
+        ],
+        "name": "Steak & Potatoes",
+        "calories": 600,
+        "protein": 45,
+        "carbs": 30,
+        "fat": 25
+    },
+    {
+        "id": "oatmeal",
+        "keywords": [
+            "oatmeal",
+            "porridge",
+            "oats",
+            "cereal"
+        ],
+        "name": "Oatmeal with Fruits",
+        "calories": 300,
+        "protein": 10,
+        "carbs": 50,
+        "fat": 5
+    },
+    {
+        "id": "salad",
+        "keywords": [
+            "salad",
+            "vegetable",
+            "lettuce",
+            "greens"
+        ],
+        "name": "Green Salad",
+        "calories": 150,
+        "protein": 5,
+        "carbs": 10,
+        "fat": 10
+    },
+    {
+        "id": "broccoli",
+        "keywords": [
+            "broccoli",
+            "vegetable"
+        ],
+        "name": "Steamed Broccoli",
+        "calories": 50,
+        "protein": 3,
+        "carbs": 6,
+        "fat": 0
+    }
+]

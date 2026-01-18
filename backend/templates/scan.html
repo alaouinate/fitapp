@@ -1,0 +1,93 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header" style="margin-bottom: 2rem; text-align: center;">
+    <h1 style="font-size: 1.8rem; margin-bottom: 0.5rem;">Food Scanner</h1>
+    <p class="text-muted">Database Search or AI Scan</p>
+</div>
+
+<!-- Search Bar -->
+<div class="card" style="margin-bottom: 1rem; padding: 1rem;">
+    <form action="/scan" method="post" style="display: flex; gap: 10px;">
+        <!-- IMPORTANT: name="text_query" must match main.py -->
+        <input type="text" name="text_query" placeholder="Search (e.g. Salmon)..."
+            style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); color: white;">
+        <button type="submit" class="btn" style="width: auto; padding: 0 1.5rem;"><i
+                class="ph-fill ph-magnifying-glass"></i></button>
+    </form>
+</div>
+
+<!-- Upload Area -->
+<div class="card" style="text-align: center; padding: 2rem;">
+    {% if not result %}
+    <form action="/scan" method="post" enctype="multipart/form-data" id="scan-form">
+
+        <!-- Hidden Input -->
+        <input type="file" name="file" id="file-input" accept="image/*" style="display: none;"
+            onchange="document.getElementById('scan-form').submit(); document.getElementById('loading').style.display='block';">
+
+        <!-- Trigger -->
+        <div onclick="document.getElementById('file-input').click()" style="
+                    width: 200px; height: 200px; border: 3px dashed var(--border); border-radius: 50%;
+                    display: flex; flex-direction: column; align-items: center; justify-content: center;
+                    margin: 0 auto 2rem auto; cursor: pointer; transition: all 0.2s;
+                 " onmouseover="this.style.borderColor='var(--accent-cyan)'"
+            onmouseout="this.style.borderColor='var(--border)'">
+            <i class="ph-fill ph-camera" style="font-size: 3rem; color: var(--text-muted);"></i>
+            <span class="text-muted" style="margin-top: 0.5rem;">
+                {% if tf_enabled %}
+                Tap for AI Scan
+                {% else %}
+                AI Offline<br>(Use Search Above)
+                {% endif %}
+            </span>
+        </div>
+
+        <div id="loading" style="display: none;">
+            <div
+                style="width: 24px; height: 24px; border: 3px solid var(--accent-cyan); border-top-color: transparent; border-radius: 50%; animation: spin 1s linear infinite; margin: 0 auto;">
+            </div>
+            <p style="margin-top: 1rem;">Processng...</p>
+        </div>
+
+        {% if message %}
+        <p style="color: var(--accent-cyan); margin-top: 1rem;">{{ message }}</p>
+        {% endif %}
+    </form>
+    {% else %}
+    <!-- Result View -->
+    <div style="text-align: left;">
+        <div style="display: flex; align-items: center; justify-content: center; margin-bottom: 2rem;">
+            <div
+                style="background: rgba(0, 255, 136, 0.1); color: var(--accent-green); padding: 0.5rem 1rem; border-radius: 20px; font-weight: 600; font-size: 0.9rem;">
+                <i class="ph-fill ph-check-circle"></i> Match Found
+            </div>
+        </div>
+
+        <h3 style="margin-bottom: 1rem;">{{ result.name }}</h3>
+
+        <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; text-align: center;">
+                <span style="display: block; font-size: 1.5rem; color: var(--accent-cyan);">{{ result.calories }}</span>
+                <span class="text-muted" style="font-size: 0.8rem;">Calories</span>
+            </div>
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; text-align: center;">
+                <span style="display: block; font-size: 1.5rem; color: var(--accent-green);">{{ result.protein
+                    }}g</span>
+                <span class="text-muted" style="font-size: 0.8rem;">Protein</span>
+            </div>
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; text-align: center;">
+                <span style="display: block; font-size: 1.5rem; color: #ffcc00;">{{ result.carbs }}g</span>
+                <span class="text-muted" style="font-size: 0.8rem;">Carbs</span>
+            </div>
+            <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px; text-align: center;">
+                <span style="display: block; font-size: 1.5rem; color: #ff4444;">{{ result.fat }}g</span>
+                <span class="text-muted" style="font-size: 0.8rem;">Fat</span>
+            </div>
+        </div>
+
+        <a href="/scan" class="btn" style="display: block; text-align: center; text-decoration: none;">Scan Another</a>
+    </div>
+    {% endif %}
+</div>
+{% endblock %}

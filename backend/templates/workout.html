@@ -1,0 +1,164 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem;">Today's Workout</h1>
+    <p class="text-muted">{{ today_date }}</p>
+</div>
+
+<!-- Weekly Strip (Clickable) -->
+<div style="display: grid; grid-template-columns: repeat(7, 1fr); gap: 5px; margin-bottom: 2rem;">
+    {% for day in weekly_schedule %}
+    <!-- We link to same page for now, but UI feedback is there -->
+    <a href="/workout?date_offset={{ loop.index0 }}" style="text-decoration: none;">
+        <div style="
+            display: flex; flex-direction: column; align-items: center;
+            background: {{ 'rgba(0,255,136,0.1)' if day.is_today else 'var(--bg-card)' }};
+            border: 1px solid {{ 'var(--accent-green)' if day.is_today else 'var(--border)' }};
+            border-radius: 8px; padding: 0.5rem 0.2rem;
+            transition: transform 0.1s;
+        " onmousedown="this.style.transform='scale(0.95)'" onmouseup="this.style.transform='scale(1)'">
+            <span class="text-muted" style="font-size: 0.7rem;">{{ day.day_name }}</span>
+            <div style="
+                width: 24px; height: 24px; background: var(--accent-cyan); color: #000;
+                border-radius: 50%; display: flex; align-items: center; justify-content: center;
+                font-weight: 700; font-size: 0.8rem; margin: 4px 0;
+            ">
+                {{ day.workout_letter }}
+            </div>
+        </div>
+    </a>
+    {% endfor %}
+</div>
+
+<!-- Hidden Rest Timer Overlay -->
+<div id="rest-timer-overlay" style="
+    display: none; position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--bg-card); border: 1px solid var(--accent-cyan); padding: 1rem 2rem;
+    border-radius: 50px; box-shadow: 0 10px 30px rgba(0,0,0,0.5); z-index: 99;
+    align-items: center; gap: 1rem; animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+">
+    <span class="text-muted" style="font-size: 0.9rem;">Resting...</span>
+    <span id="rest-timer-display"
+        style="font-family: monospace; font-size: 1.5rem; font-weight: 700; color: var(--accent-cyan);">00:00</span>
+    <button onclick="closeRestTimer()"
+        style="background: rgba(255,255,255,0.1); border:none; color:white; border-radius:50%; width:30px; height:30px; cursor:pointer;">&times;</button>
+</div>
+
+<!-- Main Workout Card -->
+<div class="card">
+    <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+        <h2 style="margin: 0; color: var(--accent-cyan);">{{ workout.name }}</h2>
+        <span style="background: rgba(255,255,255,0.1); padding: 4px 8px; border-radius: 6px; font-size: 0.8rem;">
+            {{ workout.exercises|length }} Exercises
+        </span>
+    </div>
+
+    <!-- Exercises -->
+    <div style="display: flex; flex-direction: column; gap: 1rem;">
+        {% for exercise in workout.exercises %}
+        <div style="background: rgba(0,0,0,0.2); padding: 1rem; border-radius: 8px;">
+            <h3 style="margin: 0 0 0.5rem 0;">{{ exercise.name }}</h3>
+            <div style="display: flex; gap: 1rem; color: var(--text-muted); font-size: 0.9rem; margin-bottom: 0.8rem;">
+                <span>{{ exercise.sets }} Sets</span>
+                <span>{{ exercise.reps }} Reps</span>
+            </div>
+
+            <!-- Checkboxes (Interactive JS) -->
+            <div style="display: flex; gap: 10px;">
+                {% for i in range(exercise.sets) %}
+                <div class="set-checkbox" onclick="toggleSet(this)" style="
+                        width: 32px; height: 32px; border-radius: 50%; border: 2px solid var(--border);
+                        display: flex; align-items: center; justify-content: center; cursor: pointer;
+                        transition: all 0.2s; user-select: none;
+                     ">
+                    {{ i + 1 }}
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+
+    <button class="btn" style="margin-top: 2rem;" onclick="finishWorkout()">
+        Complete Workout
+    </button>
+</div>
+
+<style>
+    @keyframes slideUp {
+        from {
+            transform: translate(-50%, 20px);
+            opacity: 0;
+        }
+
+        to {
+            transform: translate(-50%, 0);
+            opacity: 1;
+        }
+    }
+</style>
+
+<script>
+    // --- TIMER LOGIC ---
+    let restInterval;
+    let restSeconds = 0;
+    const restOverlay = document.getElementById('rest-timer-overlay');
+    const restDisplay = document.getElementById('rest-timer-display');
+
+    function startRestTimer() {
+        console.log("Starting Rest Timer");
+        restOverlay.style.display = 'flex';
+        restSeconds = 0;
+        restDisplay.innerText = "00:00";
+
+        // Clear existing to avoid double speed
+        if (restInterval) clearInterval(restInterval);
+
+        restInterval = setInterval(() => {
+            restSeconds++;
+            const m = Math.floor(restSeconds / 60).toString().padStart(2, '0');
+            const s = (restSeconds % 60).toString().padStart(2, '0');
+            restDisplay.innerText = `${m}:${s}`;
+        }, 1000);
+    }
+
+    function closeRestTimer() {
+        if (restInterval) clearInterval(restInterval);
+        restOverlay.style.display = 'none';
+    }
+
+    // --- CHECKBOX LOGIC ---
+    function toggleSet(el) {
+        if (el.classList.contains('active')) {
+            // Uncheck
+            el.classList.remove('active');
+            el.style.background = 'transparent';
+            el.style.color = 'var(--text-main)';
+            el.style.borderColor = 'var(--border)';
+            el.innerHTML = el.dataset.originalNum;
+            // Maybe stop timer if unchecked? No, user might just be correcting.
+        } else {
+            // Check
+            // Save original number
+            el.dataset.originalNum = el.innerText;
+
+            el.classList.add('active');
+            el.style.background = 'var(--accent-green)';
+            el.style.color = '#000';
+            el.style.borderColor = 'var(--accent-green)';
+            el.innerHTML = '<i class="ph-bold ph-check"></i>';
+
+            // Trigger Timer
+            startRestTimer();
+        }
+    }
+
+    function finishWorkout() {
+        if (confirm("Great job! Mark workout as complete?")) {
+            alert("Workout Saved!");
+            window.location.href = '/';
+        }
+    }
+</script>
+{% endblock %}

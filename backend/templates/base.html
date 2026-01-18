@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FitVision Pro (Python Edition)</title>
+    <script src="https://unpkg.com/@phosphor-icons/web"></script>
+    <style>
+        :root {
+            --bg-dark: #0a0e27;
+            --bg-card: #151a35;
+            --text-main: #ffffff;
+            --text-muted: #94a3b8;
+            --accent-green: #00ff88;
+            --accent-cyan: #00d4ff;
+            --border: rgba(255, 255, 255, 0.1);
+        }
+
+        body {
+            background-color: var(--bg-dark);
+            color: var(--text-main);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding-bottom: 80px;
+            /* Space for bottom nav */
+        }
+
+        .container {
+            padding: 1rem;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .card {
+            background: var(--bg-card);
+            border-radius: 16px;
+            padding: 1.5rem;
+            margin-bottom: 1rem;
+            border: 1px solid var(--border);
+        }
+
+        .btn {
+            background: var(--accent-green);
+            color: #000;
+            border: none;
+            padding: 1rem;
+            border-radius: 12px;
+            font-weight: 700;
+            width: 100%;
+            cursor: pointer;
+            font-size: 1rem;
+        }
+
+        .nav-bottom {
+            position: fixed;
+            bottom: 0;
+            left: 0;
+            right: 0;
+            background: rgba(10, 14, 39, 0.95);
+            backdrop-filter: blur(10px);
+            border-top: 1px solid var(--border);
+            display: flex;
+            justify-content: space-around;
+            padding: 10px 0;
+            z-index: 100;
+        }
+
+        .nav-item {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            color: var(--text-muted);
+            text-decoration: none;
+            font-size: 0.75rem;
+            gap: 4px;
+        }
+
+        .nav-item.active {
+            color: var(--accent-cyan);
+        }
+
+        .nav-item i {
+            font-size: 1.5rem;
+        }
+
+        /* Utility */
+        .text-muted {
+            color: var(--text-muted);
+        }
+
+        h1,
+        h2,
+        h3 {
+            margin-top: 0;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        {% block content %}{% endblock %}
+    </div>
+
+    <!-- Navigation -->
+    <nav class="nav-bottom">
+        <a href="/" class="nav-item {{ 'active' if active_page == 'home' }}">
+            <i class="ph ph-house"></i>
+            <span>Home</span>
+        </a>
+        <a href="/workout" class="nav-item {{ 'active' if active_page == 'workout' }}">
+            <i class="ph ph-barbell"></i>
+            <span>Workout</span>
+        </a>
+        <a href="/scan" class="nav-item {{ 'active' if active_page == 'scan' }}">
+            <i class="ph ph-camera"></i>
+            <span>Scan</span>
+        </a>
+        <a href="/reset" onclick="return confirm('Reset App State?')" class="nav-item" style="color: #ff4444;">
+            <i class="ph ph-arrow-counter-clockwise"></i>
+            <span>Reset</span>
+        </a>
+    </nav>
+</body>
+
+</html>

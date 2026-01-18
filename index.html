@@ -4,20 +4,33 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description"
+        content="FitVision Pro - Your AI-powered fitness companion for tracking workouts, nutrition, and health goals.">
+    <meta name="theme-color" content="#00ff88">
     <title>FitVision Pro</title>
+
+    <!-- PWA Manifest -->
+    <link rel="manifest" href="manifest.json">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
     <!-- Icons -->
     <script src="https://unpkg.com/@phosphor-icons/web"></script>
+
     <!-- Chart.js for Weight Tracker -->
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
     <link rel="stylesheet" href="style.css">
 </head>
 
 <body>
     <div id="app">
+        <!-- Toast Notification Container -->
+        <div id="toast-container" class="toast-container"></div>
+
         <!-- Sidebar (Desktop) / Bottom Nav (Mobile) -->
         <nav class="sidebar">
             <div class="logo">
@@ -26,25 +39,29 @@
             </div>
 
             <div class="nav-items">
-                <button class="nav-item active" data-view="dashboard">
+                <button class="nav-item active" data-view="dashboard" title="Dashboard (Alt+1)">
                     <i class="ph ph-house"></i>
                     <span>Home</span>
                 </button>
-                <button class="nav-item" data-view="workout">
+                <button class="nav-item" data-view="workout" title="Workout (Alt+2)">
                     <i class="ph ph-barbell"></i>
                     <span>Workout</span>
                 </button>
-                <button class="nav-item scan-btn" data-view="scan">
+                <button class="nav-item" data-view="calendar" title="Calendar (Alt+3)">
+                    <i class="ph ph-calendar"></i>
+                    <span>Calendar</span>
+                </button>
+                <button class="nav-item scan-btn" data-view="scan" title="AI Scanner (Alt+4)">
                     <div class="scan-circle">
                         <i class="ph-fill ph-camera"></i>
                     </div>
                     <span>Scan</span>
                 </button>
-                <button class="nav-item" data-view="nutrition">
+                <button class="nav-item" data-view="nutrition" title="Nutrition (Alt+5)">
                     <i class="ph ph-bowl-food"></i>
                     <span>Nutrition</span>
                 </button>
-                <button class="nav-item" data-view="profile">
+                <button class="nav-item" data-view="profile" title="Profile (Alt+6)">
                     <i class="ph ph-user"></i>
                     <span>Profile</span>
                 </button>
@@ -56,7 +73,7 @@
             <header class="top-bar">
                 <h1 id="page-title">Dashboard</h1>
                 <div class="user-profile">
-                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="User">
+                    <img src="https://api.dicebear.com/7.x/avataaars/svg?seed=Alex" alt="User Avatar">
                 </div>
             </header>
 
@@ -71,7 +88,10 @@
         </div>
     </div>
 
-    <script src="app.js"></script>
+    <script src="onboarding.js"></script>
+    <script src="calendar.js"></script>
+    <script src="profile.js"></script>
+    <script src="app.js?v=2"></script>
 </body>
 
 </html>

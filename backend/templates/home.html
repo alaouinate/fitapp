@@ -8,6 +8,7 @@
 
 <!-- Stats Row -->
 <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+    <!-- ... stats ... -->
     <div class="card" style="margin: 0; text-align: center; padding: 1rem;">
         <span style="display: block; font-size: 1.8rem; font-weight: 700; color: var(--accent-cyan);">75.5</span>
         <span class="text-muted" style="font-size: 0.8rem;">Current Kg</span>
@@ -17,6 +18,17 @@
         <span class="text-muted" style="font-size: 0.8rem;">Day Streak</span>
     </div>
 </div>
+
+{% if show_onboarding %}
+<div
+    style="background: linear-gradient(135deg, #00ff88 0%, #00d4ff 100%); padding: 1rem; border-radius: 12px; margin-bottom: 2rem; text-align: center; color: black;">
+    <h2 style="margin: 0; font-size: 1.2rem;">Start Your Journey 🚀</h2>
+    <p style="margin: 0.5rem 0;">Get a custom workout plan designed by AI.</p>
+    <a href="/onboarding"
+        style="display: inline-block; background: black; color: white; padding: 8px 16px; border-radius: 20px; text-decoration: none; font-weight: bold;">Create
+        Plan</a>
+</div>
+{% endif %}
 
 <!-- Main Actions -->
 <div style="display: flex; flex-direction: column; gap: 1rem;">

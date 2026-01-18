@@ -1,0 +1,46 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem;">Your Weekly Plan</h1>
+    <p class="text-muted">Custom built for you</p>
+</div>
+
+<div style="display: flex; flex-direction: column; gap: 1rem;">
+    {% for day in days %}
+    <div class="card"
+        style="margin: 0; padding: 1.5rem; {{ 'border: 1px solid var(--accent-cyan);' if day.is_active else 'opacity: 0.8;' }}">
+        <div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 1rem;">
+            <h3 style="margin: 0; color: var(--text-main);">{{ day.name }}</h3>
+            {% if day.is_rest %}
+            <span
+                style="background: rgba(255,255,255,0.1); padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">Rest</span>
+            {% else %}
+            <span
+                style="background: rgba(0, 212, 255, 0.2); color: var(--accent-cyan); padding: 4px 10px; border-radius: 12px; font-size: 0.8rem;">Workout</span>
+            {% endif %}
+        </div>
+
+        {% if not day.is_rest %}
+        <div style="margin-bottom: 0.5rem;">
+            <strong style="color: var(--accent-cyan); font-size: 1.1rem;">{{ day.workout_name }}</strong>
+        </div>
+        <ul style="padding-left: 1.2rem; color: var(--text-muted); margin: 0;">
+            {% for ex in day.exercises %}
+            <li style="margin-bottom: 0.5rem;">
+                <span style="color: white;">{{ ex.name }}</span>
+                <span style="font-size: 0.9rem;">({{ ex.sets }} x {{ ex.reps }})</span>
+            </li>
+            {% endfor %}
+        </ul>
+        {% else %}
+        <p class="text-muted" style="margin: 0;">Active Recovery. Stretch, walk, or relax.</p>
+        {% endif %}
+    </div>
+    {% endfor %}
+</div>
+
+<div style="margin-top: 2rem; text-align: center;">
+    <a href="/onboarding" class="text-muted" style="font-size: 0.9rem;">Regenerate Plan</a>
+</div>
+{% endblock %}

@@ -1,0 +1,151 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header" style="margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem;">Profile & Stats</h1>
+    <p class="text-muted">Manage your progress</p>
+</div>
+
+<!-- Stats Summary -->
+<div style="display: grid; grid-template-columns: 1fr 1fr; gap: 1rem; margin-bottom: 2rem;">
+    <div class="card" style="margin: 0; text-align: center; padding: 1rem;">
+        <span style="display: block; font-size: 1.8rem; font-weight: 700; color: var(--accent-cyan);">{{ current_weight
+            }}kg</span>
+        <span class="text-muted" style="font-size: 0.8rem;">Current Weight</span>
+    </div>
+    <div class="card" style="margin: 0; text-align: center; padding: 1rem;">
+        <span style="display: block; font-size: 1.8rem; font-weight: 700; color: var(--accent-green);">{{ current_streak
+            }}</span>
+        <span class="text-muted" style="font-size: 0.8rem;">Day Streak 🔥</span>
+    </div>
+</div>
+
+<!-- Weight Chart (New) -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem;">Body Weight Trend</h3>
+    <canvas id="weightChart" style="width: 100%; height: 200px;"></canvas>
+
+    <!-- Quick Add Weight -->
+    <form action="/profile/weight" method="post" style="display: flex; gap: 10px; margin-top: 1rem;">
+        <input type="number" step="0.1" name="weight" placeholder="Log weight (kg)" required
+            style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); color: white;">
+        <button type="submit" class="btn" style="width: auto; padding: 0 1.5rem;">Log</button>
+    </form>
+</div>
+
+<!-- Activity Chart -->
+<div class="card" style="margin-bottom: 2rem;">
+    <h3 style="margin-bottom: 1rem;">Activity Activity</h3>
+    <canvas id="activityChart" style="width: 100%; height: 150px;"></canvas>
+</div>
+
+<!-- Recent History with Delete -->
+<div class="card" style="margin-top: 1rem;">
+    <h3 style="margin-bottom: 1rem;">Recent Sessions</h3>
+    <div style="display: flex; flex-direction: column; gap: 10px;">
+        {% for session in history %}
+        <div
+            style="display: flex; justify-content: space-between; align-items: center; padding: 10px; background: rgba(0,0,0,0.2); border-radius: 8px;">
+            <div>
+                <span style="display: block; font-weight: 600;">Workout Session</span>
+                <span class="text-muted" style="font-size: 0.8rem;">{{ session.display_date }}</span>
+            </div>
+            <div style="display: flex; align-items: center; gap: 1rem;">
+                <span style="color: var(--accent-green); font-size: 0.9rem;">{{ session.exercises }} Ex</span>
+                <button onclick="deleteSession('{{ session.date }}')"
+                    style="background: none; border: none; color: #ff4444; cursor: pointer;">
+                    <i class="ph-fill ph-trash" style="font-size: 1.2rem;"></i>
+                </button>
+            </div>
+        </div>
+        {% else %}
+        <p class="text-muted" style="text-align: center;">No workouts yet.</p>
+        {% endfor %}
+    </div>
+</div>
+
+<!-- Account Settings -->
+<div class="card" style="margin-top: 2rem; border-color: rgba(255, 68, 68, 0.3);">
+    <h3 style="margin-bottom: 1rem;">Security</h3>
+    <form action="/profile/password" method="post">
+        <label class="text-muted">New Password</label>
+        <div style="display: flex; gap: 10px; margin-top: 5px;">
+            <input type="password" name="new_password" placeholder="New Password" required
+                style="flex: 1; padding: 10px; border-radius: 8px; border: 1px solid var(--border); background: rgba(0,0,0,0.2); color: white;">
+            <button type="submit" class="btn"
+                style="width: auto; background: var(--bg-card); border: 1px solid var(--border); color: white;">Update</button>
+        </div>
+    </form>
+</div>
+
+<!-- Chart.js -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script>
+    // --- Activity Chart ---
+    const ctxA = document.getElementById('activityChart').getContext('2d');
+    new Chart(ctxA, {
+        type: 'bar',
+        data: {
+            labels: {{ chart_labels | tojson }},
+        datasets: [{
+            label: 'Exercises',
+            data: {{ chart_data | tojson }},
+        backgroundColor: '#00ff88',
+        borderRadius: 4
+            }]
+        },
+        options: {
+        responsive: true,
+        scales: {
+            y: { display: false, beginAtZero: true },
+            x: { grid: { display: false } }
+        },
+        plugins: { legend: { display: false } }
+    }
+    });
+
+    // --- Weight Chart ---
+    const ctxW = document.getElementById('weightChart').getContext('2d');
+    const weightLabels = {{ weight_labels | tojson }};
+    const weightData = {{ weight_data | tojson }};
+
+    new Chart(ctxW, {
+        type: 'line',
+        data: {
+            labels: weightLabels,
+            datasets: [{
+                label: 'Weight (kg)',
+                data: weightData,
+                borderColor: '#00d4ff',
+                backgroundColor: 'rgba(0, 212, 255, 0.1)',
+                fill: true,
+                tension: 0.4
+            }]
+        },
+        options: {
+            responsive: true,
+            scales: {
+                y: { grid: { color: 'rgba(255,255,255,0.05)' } },
+                x: { grid: { display: false } }
+            },
+            plugins: { legend: { display: false } }
+        }
+    });
+
+    // --- Delete Function ---
+    async function deleteSession(dateStr) {
+        if (!confirm("Are you sure you want to delete the workout logs for " + dateStr + "?")) return;
+
+        try {
+            const res = await fetch('/profile/history/' + dateStr, { method: 'DELETE' });
+            if (res.ok) {
+                window.location.reload();
+            } else {
+                alert("Failed to delete.");
+            }
+        } catch (e) {
+            alert("Error: " + e);
+        }
+    }
+</script>
+{% endblock %}

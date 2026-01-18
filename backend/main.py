@@ -12,19 +12,22 @@ import json
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import our Logic Engine
-from workout_engine import get_workout_for_date, get_weekly_schedule
+from backend.workout_engine import get_workout_for_date, get_weekly_schedule
 
 # Services
 from services.local_ai_service import analyze_image_locally, TF_AVAILABLE
 from services.database_service import find_nutrition_by_classification, search_food_text
 
 # Auth & DB
-from backend.routers import auth, workout
+from backend.routers import auth, workout, profile, exercises, onboarding
 from backend.database import init_db
 
 app = FastAPI()
 app.include_router(auth.router)
 app.include_router(workout.router)
+app.include_router(profile.router)
+app.include_router(exercises.router)
+app.include_router(onboarding.router)
 
 templates = Jinja2Templates(directory="backend/templates")
 
@@ -44,28 +47,6 @@ async def auth_middleware(request: Request, call_next):
     response = await call_next(request)
     return response
 
-# --- PERSISTENCE LAYER ---
-DATA_FILE = "backend/data/db.json"
-# ... (rest of the file remains similar, but DB logic might ideally move to SQLite later)
-os.makedirs("backend/data", exist_ok=True)
-
-def load_db():
-    if os.path.exists(DATA_FILE):
-        with open(DATA_FILE, "r") as f:
-            data = json.load(f)
-            data["start_date"] = datetime.datetime.strptime(data["start_date"], "%Y-%m-%d").date()
-            return data
-    else:
-        return {"start_date": datetime.date.today(), "history": []}
-
-def save_db(data):
-    serializable = data.copy()
-    serializable["start_date"] = data["start_date"].strftime("%Y-%m-%d")
-    with open(DATA_FILE, "w") as f:
-        json.dump(serializable, f)
-
-DB = load_db()
-
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
     user_name = "User"
@@ -80,32 +61,49 @@ async def read_root(request: Request):
             user_name = user["name"]
 
     today = datetime.date.today()
-    workout = get_workout_for_date(today, DB["start_date"])
+    # Dummy start date
+    start_date = datetime.date.today()
+    workout = get_workout_for_date(today, start_date, user_id)
     
+    # Check if needs onboarding
+    show_onboarding = False
+    if workout["name"] == "Welcome! (Set up Plan)":
+        show_onboarding = True
+
     return templates.TemplateResponse("home.html", {
         "request": request, "active_page": "home",
         "today_date": today.strftime("%A, %B %d"),
         "workout_name": workout["name"],
-        "user_name": user_name
+        "user_name": user_name,
+        "show_onboarding": show_onboarding
     })
 
 @app.get("/workout", response_class=HTMLResponse)
 async def read_workout(request: Request):
-    today = datetime.date.today()
-    workout = get_workout_for_date(today, DB["start_date"])
-    weekly_schedule = get_weekly_schedule(DB["start_date"])
-    
-    return templates.TemplateResponse("workout.html", {
-        "request": request, "active_page": "workout",
-        "workout": workout, "weekly_schedule": weekly_schedule,
-        "today_date": today.strftime("%A, %B %d")
-    })
+    try:
+        user_id = request.cookies.get("user_id")
+        today = datetime.date.today()
+        
+        # Use simple dummy date for fallback if DB is gone
+        start_date = datetime.date.today()
+        
+        workout = get_workout_for_date(today, start_date, user_id)
+        weekly_schedule = get_weekly_schedule(start_date, user_id)
+        
+        return templates.TemplateResponse("workout.html", {
+            "request": request, "active_page": "workout",
+            "workout": workout, "weekly_schedule": weekly_schedule,
+            "today_date": today.strftime("%A, %B %d")
+        })
+    except Exception as e:
+        import traceback
+        traceback.print_exc()
+        return HTMLResponse(f"Error: {str(e)}", status_code=500)
 
-@app.get("/reset")
-async def reset_app():
-    DB["start_date"] = datetime.date.today()
-    save_db(DB)
-    return RedirectResponse(url="/workout")
+# Reset route removed as it depended on legacy JSON DB.
+# @app.get("/reset")
+# async def reset_app():
+#     return RedirectResponse(url="/")
 
 @app.get("/scan", response_class=HTMLResponse)
 async def scan_page(request: Request):

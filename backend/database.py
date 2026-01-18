@@ -52,6 +52,40 @@ def init_db():
             FOREIGN KEY(user_id) REFERENCES users(id)
         )
     ''')
+
+    # Weight Logs Table
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS weight_logs (
+            id INTEGER PRIMARY KEY AUTOINCREMENT,
+            user_id INTEGER,
+            date TEXT,
+            weight REAL,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    ''')
+
+    # User Profile (Onboarding Data)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS user_settings (
+            user_id INTEGER PRIMARY KEY,
+            frequency INTEGER, -- 3 or 4
+            level TEXT, -- Beginner, Intermediate, Advanced
+            goal TEXT, -- Muscle, Fat Loss, Strength
+            equipment TEXT, -- Gym, Home, Bodyweight
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    ''')
+
+    # Workout Plans (The Generated Schedule)
+    # We will store the full weekly schedule as a JSON string for simplicity
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS workout_plans (
+            user_id INTEGER PRIMARY KEY,
+            schedule_json TEXT, -- JSON blob of the weekly plan
+            created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    ''')
     
     conn.commit()
     conn.close()

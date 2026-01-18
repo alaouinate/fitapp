@@ -1,0 +1,65 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="header" style="text-align: center; margin-bottom: 2rem;">
+    <h1 style="font-size: 1.8rem; color: var(--accent-cyan);">Start Your Journey</h1>
+    <p class="text-muted">Let's build your perfect program.</p>
+</div>
+
+<div class="card">
+    <form action="/onboarding/generate" method="post">
+
+        <!-- Frequency -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem; color: var(--text-main);">Days per week?</label>
+            <div style="display: flex; gap: 10px;">
+                <label
+                    style="flex: 1; text-align: center; background: rgba(0,255,136,0.1); padding: 10px; border-radius: 8px; cursor: pointer;">
+                    <input type="radio" name="frequency" value="3" checked> 3 Days
+                </label>
+                <label
+                    style="flex: 1; text-align: center; background: rgba(0,255,136,0.1); padding: 10px; border-radius: 8px; cursor: pointer;">
+                    <input type="radio" name="frequency" value="4"> 4 Days
+                </label>
+            </div>
+        </div>
+
+        <!-- Level -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Experience Level</label>
+            <select name="level"
+                style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.3); color: white; border: 1px solid var(--border);">
+                <option value="Beginner">Beginner</option>
+                <option value="Intermediate">Intermediate</option>
+                <option value="Advanced">Advanced</option>
+            </select>
+        </div>
+
+        <!-- Goal -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Main Goal</label>
+            <select name="goal"
+                style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.3); color: white; border: 1px solid var(--border);">
+                <option value="Muscle">Build Muscle</option>
+                <option value="Fat Loss">Lose Fat</option>
+                <option value="Strength">Get Stronger</option>
+            </select>
+        </div>
+
+        <!-- Equipment -->
+        <div style="margin-bottom: 1.5rem;">
+            <label style="display: block; margin-bottom: 0.5rem;">Equipment Access</label>
+            <select name="equipment"
+                style="width: 100%; padding: 10px; border-radius: 8px; background: rgba(0,0,0,0.3); color: white; border: 1px solid var(--border);">
+                <option value="Gym">Full Gym</option>
+                <option value="Home">Home (Dumbbells)</option>
+                <option value="Bodyweight">Bodyweight Only</option>
+            </select>
+        </div>
+
+        <button type="submit" class="btn" style="background: var(--accent-cyan); color: #000;">
+            Generate Program <i class="ph-bold ph-lightning"></i>
+        </button>
+    </form>
+</div>
+{% endblock %}

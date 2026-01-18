@@ -1,86 +1,98 @@
 import datetime
+from backend.database import get_db_connection
+import json
 
-# --- CONFIGURATION ---
-PROGRAM_START_DATE = datetime.date.today() # Will be overwritten by DB
+# --- STATIC FALLBACK WORKOUT (If no user plan found) ---
 WORKOUT_PROGRAM = [
     {
-        "id": "chest_triceps",
-        "name": "Chest & Triceps",
+        "name": "Upper Body Power",
         "exercises": [
-            {"name": "Bench Press", "sets": 4, "reps": "8-12"},
-            {"name": "Incline Dumbbell Press", "sets": 3, "reps": "10-12"},
-            {"name": "Tricep Pushdowns", "sets": 3, "reps": "12-15"}
+            {"name": "Bench Press", "sets": 3, "reps": "5-8"},
+            {"name": "Barbell Rows", "sets": 3, "reps": "6-10"},
+            {"name": "Overhead Press", "sets": 3, "reps": "8-12"},
         ]
-    },
-    {
-        "id": "back_biceps",
-        "name": "Back & Biceps",
-        "exercises": [
-            {"name": "Lat Pulldowns", "sets": 4, "reps": "10-12"},
-            {"name": "Barbell Rows", "sets": 3, "reps": "8-10"},
-            {"name": "Bicep Curls", "sets": 3, "reps": "12-15"}
-        ]
-    },
-    {
-        "id": "legs",
-        "name": "Leg Day",
-        "exercises": [
-            {"name": "Squats", "sets": 4, "reps": "6-8"},
-            {"name": "Leg Press", "sets": 3, "reps": "10-12"},
-            {"name": "Calf Raises", "sets": 4, "reps": "15-20"}
-        ]
-    },
-    {
-        "id": "shoulders_abs",
-        "name": "Shoulders & Abs",
-        "exercises": [
-            {"name": "Overhead Press", "sets": 4, "reps": "8-10"},
-            {"name": "Lateral Raises", "sets": 3, "reps": "12-15"},
-            {"name": "Plank", "sets": 3, "reps": "60 sec"}
-        ]
-    }
+    }, # ... kept short for fallback
 ]
 
-def get_workout_for_date(target_date: datetime.date, start_date: datetime.date):
+def get_workout_for_date(date_obj, start_date, user_id=None):
     """
-    Pure mathematical calculation of the workout.
-    Day 0 = Workout 0
-    Day 1 = Workout 1
-    ...
+    Returns the workout for the specific date.
+    Now supports custom user plans from DB.
     """
-    delta = (target_date - start_date).days
-    if delta < 0:
-        delta = 0
     
-    # 4 Day Cycle
-    cycle_index = delta % len(WORKOUT_PROGRAM)
-    return WORKOUT_PROGRAM[cycle_index]
+    # Default Fallback (Rest Day)
+    rest_day = {"name": "Rest Day", "exercises": []}
 
-def get_weekly_schedule(start_date: datetime.date):
-    today = datetime.date.today()
-    # Find start of week (Sunday)
-    # in Python weekday(): Mon=0, Sun=6. 
-    # We want Sunday to be start.
-    # If today is Tuesday (1), we subtract 2. If Sunday (6), we subtract 0? No.
-    # Let's say Sunday is index 0.
-    
-    # Python: Mon(0), Tue(1), ... Sun(6)
-    # We want to shift so Sunday is 0.
-    # (weekday + 1) % 7. Sun(6)->0. Mon(0)->1.
-    
-    days_shift = (today.weekday() + 1) % 7
-    sunday = today - datetime.timedelta(days=days_shift)
-    
+    if not user_id:
+        return rest_day
+
+    # 1. Fetch User Plan from DB
+    try:
+        conn = get_db_connection()
+        row = conn.execute("SELECT schedule_json FROM workout_plans WHERE user_id = ?", (user_id,)).fetchone()
+        conn.close()
+
+        if not row:
+            # If authenticated but no plan, prompt Setup
+            return {"name": "Welcome! (Set up Plan)", "exercises": []}
+            
+        program_schedule = json.loads(row[0]) # row is tuple or Row object, row[0] or row['schedule_json']
+        # If using sqlite3.Row factory, access by name only works if configured. 
+        # By default in database.py we set row_factory. Let's assume dict-like access or index.
+        # But wait, looking at database.py in previous turns: "conn.row_factory = sqlite3.Row"
+        # So row['schedule_json'] is safer if Row factory is set.
+        
+        # 2. Determine Day of Week (0=Monday, 6=Sunday)
+        weekday = date_obj.weekday()
+        
+        # 3. Check if today has a workout in the schedule
+        if str(weekday) in program_schedule:
+            return program_schedule[str(weekday)]
+            
+        return rest_day
+        
+    except Exception as e:
+        print(f"Error fetching plan: {e}")
+        # Fallback to rest day on error
+        return rest_day
+
+
+def get_weekly_schedule(start_date, user_id=None):
+    """Returns list of 7 days with their workout names."""
     schedule = []
+    today = datetime.date.today()
+    start_of_week = today - datetime.timedelta(days=today.weekday()) # Monday
+
+    # Fetch User Plan
+    program_schedule = {}
+    if user_id:
+        try:
+            conn = get_db_connection()
+            row = conn.execute("SELECT schedule_json FROM workout_plans WHERE user_id = ?", (user_id,)).fetchone()
+            conn.close()
+            if row:
+                program_schedule = json.loads(row[0]) 
+        except:
+            pass
+
     for i in range(7):
-        current_day = sunday + datetime.timedelta(days=i)
-        workout = get_workout_for_date(current_day, start_date)
+        day_date = start_of_week + datetime.timedelta(days=i)
+        is_today = (day_date == today)
+        
+        # Get workout name for this index (i)
+        w_name = "Rest"
+        w_letter = "R"
+        
+        if str(i) in program_schedule:
+            w = program_schedule[str(i)]
+            w_name = w["name"]
+            w_letter = w["name"][0] # First letter of workout name
         
         schedule.append({
-            "day_name": current_day.strftime("%a"), # Sun, Mon
-            "is_today": (current_day == today),
-            "workout_letter": workout["name"][0], # C, B, L, S
-            "workout_name": workout["name"].split(' ')[0]
+            "day_name": day_date.strftime("%a"),
+            "workout_letter": w_letter,
+            "is_today": is_today,
+            "full_name": w_name
         })
         
     return schedule

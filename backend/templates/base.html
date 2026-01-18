@@ -116,6 +116,14 @@
             <i class="ph ph-camera"></i>
             <span>Scan</span>
         </a>
+        <a href="/exercises" class="nav-item {{ 'active' if active_page == 'exercises' }}">
+            <i class="ph ph-books"></i>
+            <span>Library</span>
+        </a>
+        <a href="/profile" class="nav-item {{ 'active' if active_page == 'profile' }}">
+            <i class="ph ph-chart-bar"></i>
+            <span>Stats</span>
+        </a>
         <a href="/logout" onclick="return confirm('Log out?')" class="nav-item" style="color: #ff4444;">
             <i class="ph ph-sign-out"></i>
             <span>Logout</span>

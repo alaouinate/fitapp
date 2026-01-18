@@ -154,10 +154,52 @@
         }
     }
 
-    function finishWorkout() {
-        if (confirm("Great job! Mark workout as complete?")) {
-            alert("Workout Saved!");
-            window.location.href = '/';
+    // --- DATA COLLECTION & SAVE ---
+
+    // Inject python data into JS safely
+    // safe | tojson ensures it's a valid JS object
+    const currentWorkoutData = {{ workout.exercises | tojson | safe }};
+    const currentWorkoutName = "{{ workout.name }}";
+
+    async function finishWorkout() {
+        if (!confirm("Great job! Mark workout as complete?")) return;
+
+        try {
+            const btn = document.querySelector('button[onclick="finishWorkout()"]');
+            if (btn) {
+                btn.innerHTML = "Saving...";
+                btn.disabled = true;
+            }
+
+            const response = await fetch('/workout/complete', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    workout_name: currentWorkoutName,
+                    exercises: currentWorkoutData
+                })
+            });
+
+            const result = await response.json();
+
+            if (result.status === 'success') {
+                alert("💪 Workout Saved to App Database!");
+                window.location.href = '/';
+            } else {
+                alert("Error saving: " + result.message);
+                if (btn) {
+                    btn.innerHTML = "Complete Workout";
+                    btn.disabled = false;
+                }
+            }
+        } catch (e) {
+            console.error(e);
+            alert("Network error occurred.");
+            const btn = document.querySelector('button[onclick="finishWorkout()"]');
+            if (btn) {
+                btn.innerHTML = "Complete Workout";
+                btn.disabled = false;
+            }
         }
     }
 </script>

@@ -38,6 +38,7 @@ async def auth_middleware(request: Request, call_next):
     # Check Cookie
     user_id = request.cookies.get("user_id")
     if not user_id:
+        # Redirect to login if no cookie
         return RedirectResponse(url="/login")
         
     response = await call_next(request)

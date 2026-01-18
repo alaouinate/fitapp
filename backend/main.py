@@ -1,32 +1,57 @@
-from fastapi import FastAPI, Request, UploadFile, File, Form
+from fastapi import FastAPI, Request, UploadFile, File, Form, Depends
 from fastapi.templating import Jinja2Templates
 from fastapi.staticfiles import StaticFiles
 from fastapi.responses import HTMLResponse, RedirectResponse
 import uvicorn
 import datetime
 import os
+import sys
 import json
+
+# Add project root to sys.path
+sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
 # Import our Logic Engine
 from workout_engine import get_workout_for_date, get_weekly_schedule
 
 # Services
-# We import these conditionally in main or inside the route to avoid crashing if libs missing
 from services.local_ai_service import analyze_image_locally, TF_AVAILABLE
 from services.database_service import find_nutrition_by_classification, search_food_text
 
+# Auth & DB
+from backend.routers import auth, workout
+from backend.database import init_db
+
 app = FastAPI()
+app.include_router(auth.router)
+app.include_router(workout.router)
+
 templates = Jinja2Templates(directory="backend/templates")
+
+# --- MIDDLEWARE & AUTH CHECK ---
+@app.middleware("http")
+async def auth_middleware(request: Request, call_next):
+    # Public Routes
+    if request.url.path in ["/login", "/register", "/docs", "/openapi.json"]:
+        return await call_next(request)
+    
+    # Check Cookie
+    user_id = request.cookies.get("user_id")
+    if not user_id:
+        return RedirectResponse(url="/login")
+        
+    response = await call_next(request)
+    return response
 
 # --- PERSISTENCE LAYER ---
 DATA_FILE = "backend/data/db.json"
+# ... (rest of the file remains similar, but DB logic might ideally move to SQLite later)
 os.makedirs("backend/data", exist_ok=True)
 
 def load_db():
     if os.path.exists(DATA_FILE):
         with open(DATA_FILE, "r") as f:
             data = json.load(f)
-            # DateTime conversion
             data["start_date"] = datetime.datetime.strptime(data["start_date"], "%Y-%m-%d").date()
             return data
     else:
@@ -42,12 +67,25 @@ DB = load_db()
 
 @app.get("/", response_class=HTMLResponse)
 async def read_root(request: Request):
+    user_name = "User"
+    user_id = request.cookies.get("user_id")
+    
+    if user_id:
+        from backend.database import get_db_connection
+        conn = get_db_connection()
+        user = conn.execute("SELECT name FROM users WHERE id = ?", (user_id,)).fetchone()
+        conn.close()
+        if user:
+            user_name = user["name"]
+
     today = datetime.date.today()
     workout = get_workout_for_date(today, DB["start_date"])
+    
     return templates.TemplateResponse("home.html", {
         "request": request, "active_page": "home",
         "today_date": today.strftime("%A, %B %d"),
-        "workout_name": workout["name"]
+        "workout_name": workout["name"],
+        "user_name": user_name
     })
 
 @app.get("/workout", response_class=HTMLResponse)

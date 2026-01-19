@@ -13,33 +13,39 @@ print(f"DEBUG: Exercises Router Template Dir: {TEMPLATE_DIR}")
 
 templates = Jinja2Templates(directory=TEMPLATE_DIR)
 
-# Mock Exercise Database with GIFs (Placeholders)
-EXERCISES_DB = [
-    {
-        "category": "Chest",
-        "exercises": [
-            {"name": "Bench Press", "gif": "https://media.giphy.com/media/l41YjXWDVQ6w3sK8E/giphy.gif"}, 
-            {"name": "Push Up", "gif": "https://media.giphy.com/media/3o7TKnuF6W3v6u0Ehi/giphy.gif"},
-            {"name": "Incline Dumbbell Press", "gif": "https://media.giphy.com/media/26AHG5KGFxSkqlB6M/giphy.gif"},
-        ]
-    },
-    {
-        "category": "Back",
-        "exercises": [
-            {"name": "Pull Up", "gif": "https://media.giphy.com/media/l0HlPtbGpcnqa0fja/giphy.gif"},
-            {"name": "Deadlift", "gif": "https://media.giphy.com/media/p8GJOXwSNzQPu/giphy.gif"},
-            {"name": "Barbell Row", "gif": "https://media.giphy.com/media/3o6Zt9y2JCc9P8i9aw/giphy.gif"},
-        ]
-    },
-    {
-        "category": "Legs",
-        "exercises": [
-            {"name": "Squat", "gif": "https://media.giphy.com/media/10kr1uxuvWlfCC/giphy.gif"},
-            {"name": "Lunges", "gif": "https://media.giphy.com/media/l3q2Q5w4728j06uLS/giphy.gif"},
-            {"name": "Leg Press", "gif": "https://media.giphy.com/media/3o7qDEq2bMbcbPRQ2c/giphy.gif"},
-        ]
-    }
-]
+from backend.trainer_engine import KNOWN_GIFS, get_exercise_gif
+import backend.trainer_engine as trainer
+
+# Build Library dynamically from the Trainer Engine pools
+# This ensures consistency between Plan and Library
+def build_library():
+    # We will reconstruct the library from the pools defined in trainer_engine (if accessible) 
+    # or just use our hardcoded categories but enriched with the real GIFs.
+    # Accessing internal variables of trainer_engine might be tricky if not exposed, 
+    # but we can copy the structure or import it if I modified trainer_engine to export POOLS.
+    # For now, let's redefine the structure but USE the centralized GIF fetcher.
+
+    library_structure = [
+        {"category": "Chest", "exercises": ["Bench Press", "Dumbbell Press", "Push-Ups", "Incline Press", "Cable Fly"]},
+        {"category": "Back", "exercises": ["Pull-Ups", "Lat Pulldown", "Barbell Row", "Deadlift", "Face Pull"]},
+        {"category": "Legs", "exercises": ["Barbell Squat", "Leg Press", "Lunges", "Romanian Deadlift", "Calf Raise"]},
+        {"category": "Shoulders", "exercises": ["Overhead Press", "Lateral Raise", "Rear Delt Fly"]},
+        {"category": "Arms", "exercises": ["Barbell Curl", "Triceps Pushdown", "Hammer Curl", "Skull Crushers"]}
+    ]
+
+    final_lib = []
+    for cat in library_structure:
+        ex_list = []
+        for name in cat["exercises"]:
+            ex_list.append({
+                "name": name,
+                "gif": get_exercise_gif(name)
+            })
+        final_lib.append({"category": cat["category"], "exercises": ex_list})
+    
+    return final_lib
+
+EXERCISES_DB = build_library()
 
 @router.get("/", response_class=HTMLResponse)
 async def library_page(request: Request):

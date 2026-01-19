@@ -64,6 +64,16 @@ def init_db():
         )
     ''')
 
+    # Gamification Table (XP and Level)
+    c.execute('''
+        CREATE TABLE IF NOT EXISTS user_stats (
+            user_id INTEGER PRIMARY KEY,
+            xp INTEGER DEFAULT 0,
+            level INTEGER DEFAULT 1,
+            FOREIGN KEY(user_id) REFERENCES users(id)
+        )
+    ''')
+
     # User Profile (Onboarding Data)
     c.execute('''
         CREATE TABLE IF NOT EXISTS user_settings (

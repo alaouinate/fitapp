@@ -1,5 +1,5 @@
-from fastapi import APIRouter, Request
-from fastapi.responses import HTMLResponse
+from fastapi import APIRouter, Request, HTTPException
+from fastapi.responses import HTMLResponse, RedirectResponse
 from fastapi.templating import Jinja2Templates
 from backend.database import get_db_connection
 import datetime
@@ -72,6 +72,17 @@ async def read_profile(request: Request):
                  continue
             break
             
+    # 6. Gamification Stats
+    stats = conn.execute("SELECT * FROM user_stats WHERE user_id = ?", (user_id,)).fetchone()
+    xp = 0
+    level = 1
+    if stats:
+        xp = stats['xp']
+        level = stats['level']
+    
+    xp_needed = level * 100
+    xp_percent = (xp / xp_needed) * 100
+            
     conn.close()
 
     return templates.TemplateResponse("profile.html", {
@@ -84,7 +95,11 @@ async def read_profile(request: Request):
         "chart_data": chart_data,
         "weight_labels": weight_labels,
         "weight_data": weight_data,
-        "current_weight": current_weight
+        "current_weight": current_weight,
+        "xp": xp,
+        "level": level,
+        "xp_needed": xp_needed,
+        "xp_percent": min(xp_percent, 100)
     })
 
 @router.delete("/history/{date_str}")

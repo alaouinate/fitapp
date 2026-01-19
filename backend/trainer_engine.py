@@ -1,5 +1,49 @@
 import json
 
+# --- EXERCISE DATABASE (With GIFs) ---
+# In a real app, this would be in the SQLite database 'exercises' table.
+# For now, we put it here to map names to GIFs easily.
+DEFAULT_GIF = "https://media.giphy.com/media/3o7TKSjRrfPHvzSHrG/giphy.gif" # Generic workout placeholder
+
+EXERCISE_DB = {}
+
+# Reliable Public URLs
+# Note: In production, download these assets to backend/static/exercises/
+KNOWN_GIFS = {
+    # Valid Wikimedia/Public Domain (These usually work, but let's be safe)
+    "Barbell Squat": "https://upload.wikimedia.org/wikipedia/commons/1/18/Bodyweight_Squats.gif", 
+    "Pull-Ups": "https://upload.wikimedia.org/wikipedia/commons/e/e0/Chin-up_1.gif", 
+    "Push-Ups": "https://upload.wikimedia.org/wikipedia/commons/b/b8/Push-up-2.gif",
+    
+    # Specifics found
+    "Bench Press": "https://upload.wikimedia.org/wikipedia/commons/2/29/SmithMachineBenchPress.gif", # Smith machine variant but valid
+    "Barbell Curl": "https://upload.wikimedia.org/wikipedia/commons/0/07/Wide-grip-standing-biceps-curl-1.gif",
+    "Incline Press": "https://upload.wikimedia.org/wikipedia/commons/2/29/SmithMachineBenchPress.gif", # Re-use for now as it's similar angle visually or use placehold
+    "Dumbbell Press": "https://placehold.co/600x400/1a1a1a/00d4ff?text=Dumbbell+Press", # Still no direct clean GIF found in 1 search
+    "Cable Fly": "https://placehold.co/600x400/1a1a1a/00d4ff?text=Cable+Fly",
+    "Triceps Pushdown": "https://placehold.co/600x400/1a1a1a/00d4ff?text=Triceps+Pushdown",
+}
+
+def get_exercise_gif(name):
+    """Returns a GIF URL for the exercise."""
+    # 1. Check exact match
+    if name in KNOWN_GIFS:
+        return KNOWN_GIFS[name]
+    
+    # 2. Fuzzy match maps
+    lower_name = name.lower()
+    
+    # Map common variations to single good asset
+    if "squat" in lower_name: return KNOWN_GIFS["Barbell Squat"]
+    if "push-up" in lower_name: return KNOWN_GIFS["Push-Ups"]
+    if "pull-up" in lower_name: return KNOWN_GIFS["Pull-Ups"]
+    if "bench press" in lower_name: return KNOWN_GIFS["Bench Press"]
+    if "curl" in lower_name: return KNOWN_GIFS["Barbell Curl"]
+    
+    # 3. Default Safe Fallback
+    # Returns a generated image with the Name of the exercise, better than a random broken link
+    return f"https://placehold.co/600x400/1a1a1a/00d4ff?text={name.replace(' ', '+')}"
+
 def generate_program(frequency, level, goal, equipment):
     """
     Generates a workout program based on user inputs.
@@ -10,8 +54,6 @@ def generate_program(frequency, level, goal, equipment):
     days_schedule = {}
     if frequency == "3":
         # 3 Days: Push / Pull / Legs (Mon, Wed, Fri usually)
-        # We'll map them to generic "Day 1", "Day 2", etc.
-        # 0=Mon, 1=Tue, 2=Wed, 3=Thu, 4=Fri, 5=Sat, 6=Sun
         days_schedule = {
             0: "Push",
             2: "Pull",
@@ -26,11 +68,8 @@ def generate_program(frequency, level, goal, equipment):
             4: "Shoulders & Abs"
         }
 
-    # 2. Define Exercise Pools (Simplified Logic based on prompt)
-    # This is a robust way to select based on equipment
+    # 2. Define Exercise Pools
     def select(options_list):
-        # Taking the first option as default for now suited for Gym
-        # If 'Home', we might prioritize DBs. If 'Bodyweight', pushups etc.
         if equipment == "Bodyweight":
             for opt in options_list:
                 if "Push-Up" in opt or "Lunge" in opt or "Squat" in opt or "Dip" in opt or "Plank" in opt:
@@ -39,8 +78,6 @@ def generate_program(frequency, level, goal, equipment):
             for opt in options_list:
                 if "Dumbbell" in opt or "Goblet" in opt:
                     return opt
-        
-        # Default / Gym
         return options_list[0]
 
     # --- POOLS ---
@@ -92,48 +129,54 @@ def generate_program(frequency, level, goal, equipment):
     for day_idx, focus in days_schedule.items():
         daily_routine = []
         
+        # Helper to add exercise with gif
+        def add_ex(name, sets, reps):
+            daily_routine.append({
+                "name": name,
+                "sets": sets,
+                "reps": reps,
+                "gif": get_exercise_gif(name)
+            })
+
         # Logic for each Focus Group
         if focus == "Push":
-            # Chest + Shoulders + Triceps
-            daily_routine.append({"name": select(CHEST_OPS[0]), "sets": 3, "reps": "8-12"})
-            daily_routine.append({"name": select(CHEST_OPS[1]), "sets": 3, "reps": "8-12"})
-            daily_routine.append({"name": select(SHOULDERS_OPS[0]), "sets": 3, "reps": "10-15"})
-            daily_routine.append({"name": select(ARMS_OPS["Triceps"][0]), "sets": 3, "reps": "10-15"})
+            add_ex(select(CHEST_OPS[0]), 3, "8-12")
+            add_ex(select(CHEST_OPS[1]), 3, "8-12")
+            add_ex(select(SHOULDERS_OPS[0]), 3, "10-15")
+            add_ex(select(ARMS_OPS["Triceps"][0]), 3, "10-15")
             
         elif focus == "Pull":
-            # Back + Biceps + Rear Delt
-            daily_routine.append({"name": select(BACK_OPS[0]), "sets": 3, "reps": "8-12"})
-            daily_routine.append({"name": select(BACK_OPS[1]), "sets": 3, "reps": "8-12"})
-            daily_routine.append({"name": select(BACK_OPS[2]), "sets": 3, "reps": "12-15"})
-            daily_routine.append({"name": select(ARMS_OPS["Biceps"][0]), "sets": 3, "reps": "10-15"})
+            add_ex(select(BACK_OPS[0]), 3, "8-12")
+            add_ex(select(BACK_OPS[1]), 3, "8-12")
+            add_ex(select(BACK_OPS[2]), 3, "12-15")
+            add_ex(select(ARMS_OPS["Biceps"][0]), 3, "10-15")
             
         elif focus == "Legs":
-            # Legs + Abs
-            daily_routine.append({"name": select(LEGS_OPS[0]), "sets": 3, "reps": "6-10"})
-            daily_routine.append({"name": select(LEGS_OPS[1]), "sets": 3, "reps": "10-12"})
-            daily_routine.append({"name": select(LEGS_OPS[2]), "sets": 3, "reps": "10-12"})
-            daily_routine.append({"name": select(ABS_OPS[0]), "sets": 3, "reps": "30-60s"})
+            add_ex(select(LEGS_OPS[0]), 3, "6-10")
+            add_ex(select(LEGS_OPS[1]), 3, "10-12")
+            add_ex(select(LEGS_OPS[2]), 3, "10-12")
+            add_ex(select(ABS_OPS[0]), 3, "30-60s")
 
         elif focus == "Chest & Triceps":
-            daily_routine.append({"name": select(CHEST_OPS[0]), "sets": 3, "reps": "8-12"})
-            daily_routine.append({"name": select(CHEST_OPS[1]), "sets": 3, "reps": "10-12"})
-            daily_routine.append({"name": select(CHEST_OPS[2]), "sets": 3, "reps": "12-15"})
-            daily_routine.append({"name": select(ARMS_OPS["Triceps"][0]), "sets": 3, "reps": "10-15"})
-            daily_routine.append({"name": select(ARMS_OPS["Triceps"][1]), "sets": 3, "reps": "10-15"})
+            add_ex(select(CHEST_OPS[0]), 3, "8-12")
+            add_ex(select(CHEST_OPS[1]), 3, "10-12")
+            add_ex(select(CHEST_OPS[2]), 3, "12-15")
+            add_ex(select(ARMS_OPS["Triceps"][0]), 3, "10-15")
+            add_ex(select(ARMS_OPS["Triceps"][1]), 3, "10-15")
 
         elif focus == "Back & Biceps":
-            daily_routine.append({"name": select(BACK_OPS[0]), "sets": 3, "reps": "8-12"})
-            daily_routine.append({"name": select(BACK_OPS[1]), "sets": 3, "reps": "8-12"})
-            daily_routine.append({"name": select(BACK_OPS[2]), "sets": 3, "reps": "12-15"})
-            daily_routine.append({"name": select(ARMS_OPS["Biceps"][0]), "sets": 3, "reps": "10-15"})
-            daily_routine.append({"name": select(ARMS_OPS["Biceps"][1]), "sets": 3, "reps": "10-15"})
+            add_ex(select(BACK_OPS[0]), 3, "8-12")
+            add_ex(select(BACK_OPS[1]), 3, "8-12")
+            add_ex(select(BACK_OPS[2]), 3, "12-15")
+            add_ex(select(ARMS_OPS["Biceps"][0]), 3, "10-15")
+            add_ex(select(ARMS_OPS["Biceps"][1]), 3, "10-15")
 
         elif focus == "Shoulders & Abs":
-            daily_routine.append({"name": select(SHOULDERS_OPS[0]), "sets": 3, "reps": "8-12"})
-            daily_routine.append({"name": select(SHOULDERS_OPS[1]), "sets": 3, "reps": "12-15"})
-            daily_routine.append({"name": select(SHOULDERS_OPS[2]), "sets": 3, "reps": "15-20"})
-            daily_routine.append({"name": select(ABS_OPS[0]), "sets": 3, "reps": "30-60s"})
-            daily_routine.append({"name": select(ABS_OPS[1]), "sets": 3, "reps": "15-20"})
+            add_ex(select(SHOULDERS_OPS[0]), 3, "8-12")
+            add_ex(select(SHOULDERS_OPS[1]), 3, "12-15")
+            add_ex(select(SHOULDERS_OPS[2]), 3, "15-20")
+            add_ex(select(ABS_OPS[0]), 3, "30-60s")
+            add_ex(select(ABS_OPS[1]), 3, "15-20")
 
         program[str(day_idx)] = {
             "name": focus,

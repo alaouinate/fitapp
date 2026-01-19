@@ -36,18 +36,24 @@ def get_workout_for_date(date_obj, start_date, user_id=None):
             # If authenticated but no plan, prompt Setup
             return {"name": "Welcome! (Set up Plan)", "exercises": []}
             
-        program_schedule = json.loads(row[0]) # row is tuple or Row object, row[0] or row['schedule_json']
-        # If using sqlite3.Row factory, access by name only works if configured. 
-        # By default in database.py we set row_factory. Let's assume dict-like access or index.
-        # But wait, looking at database.py in previous turns: "conn.row_factory = sqlite3.Row"
-        # So row['schedule_json'] is safer if Row factory is set.
+        program_schedule = json.loads(row[0]) 
         
         # 2. Determine Day of Week (0=Monday, 6=Sunday)
         weekday = date_obj.weekday()
         
+        # Import here to avoid potential top-level circular issues
+        from backend.trainer_engine import get_exercise_gif
+
         # 3. Check if today has a workout in the schedule
         if str(weekday) in program_schedule:
-            return program_schedule[str(weekday)]
+            workout_data = program_schedule[str(weekday)]
+            
+            # INJECT GIFS
+            if "exercises" in workout_data:
+                for ex in workout_data["exercises"]:
+                    ex['gif'] = get_exercise_gif(ex['name'])
+
+            return workout_data
             
         return rest_day
         
